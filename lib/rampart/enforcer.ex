@@ -25,7 +25,7 @@ defmodule Rampart.Enforcer do
     conn
     |> Conn.register_before_send(fn(c) ->
       case conn.assigns[:authorized] do
-        true -> conn
+        true -> c
         nil -> raise Rampart.Exceptions.AuthorizationNotPerformed
       end
     end)

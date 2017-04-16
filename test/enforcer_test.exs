@@ -5,10 +5,22 @@ defmodule EnforcerTest do
 
   alias Rampart.Enforcer
 
+  test "adds a before_send callback" do
+    conn =
+      conn(:get, "/hello")
+      |> Plug.Conn.assign(:authorized, true)
+      |> Enforcer.call([])
+
+    assert Enum.count(conn.before_send) == 1
+  end
+  
   test "raises an exception if not already authorized" do
-    assert_raise Rampart.Exceptions.AuthorizationNotPerformed, fn ->
+    conn = 
       conn(:get, "/hello")
       |> Enforcer.call([])
+    
+    assert_raise Rampart.Exceptions.AuthorizationNotPerformed, fn ->
+      List.first(conn.before_send).(conn)
     end
   end
 
@@ -16,8 +28,8 @@ defmodule EnforcerTest do
     conn =
       conn(:get, "/hello")
       |> Plug.Conn.assign(:authorized, true)
+      |> Enforcer.call([])
 
-
-     assert Enforcer.call(conn, []) == conn
+    assert List.first(conn.before_send).(conn) == conn
   end
 end
