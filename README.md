@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/pareeohnos/rampart.svg?branch=master)](https://travis-ci.org/pareeohnos/rampart)
+
 # Rampart
 
 Rampart is a simple yet flexible authorization library, to help you manage
