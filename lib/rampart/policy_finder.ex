@@ -34,6 +34,7 @@ defmodule Rampart.PolicyFinder do
   be returned.
   """
   @spec find(module() | struct()) :: policy() | nil
+  def find(nil), do: nil
   def find(resource) do
     GenServer.call(Rampart.PolicyFinder, { :find, resource })
   end
@@ -79,13 +80,42 @@ defmodule Rampart.PolicyFinder do
 
 
   @doc false
-  def handle_call({ :find, resource }, _from, state) when is_atom(resource) do
-    { :reply, :ok, state }
+  def handle_call({ :find, resource }, _from, %{ policies: policies } = state) when is_atom(resource) do
+    policy = find_policy(resource, resource, policies)
+    { :reply, policy, state }
   end
 
   @doc false
-  def handle_call({ :find, resource }, _from, state) do
-    { :reply, :ok, state }
+  def handle_call({ :find, resource }, _from, %{ policies: policies } = state) do
+    policy =
+      resource.__struct__
+      |> find_policy(resource, policies)
+
+    { :reply, policy, state }
+  end
+
+
+  defp find_policy(module, resource, policies) do
+    Code.ensure_loaded(module)
+    
+    cond do
+      :erlang.function_exported(module, :policy, 0) ->
+        # The module is overriding the `policy/0` function so invoke that
+        apply(module, :policy, [])
+
+      :erlang.function_exported(module, :policy, 1) ->
+        # The module is overriding the `policy/1` function, so invoke that
+        apply(module, :policy, [resource])
+
+      true ->
+        policy_key =
+          module
+          |> Module.split
+          |> List.last
+
+        # No overriding, so nice and simple.
+        Map.get(policies, policy_key)
+    end
   end
 
 end

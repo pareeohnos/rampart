@@ -23,8 +23,6 @@ defmodule Rampart do
     Supervisor.start_link(children, opts)
   end
 
-
-
   @doc """
   Attempts to retrieve a policy based on the resource 
   provided. A policy can be found either by a module

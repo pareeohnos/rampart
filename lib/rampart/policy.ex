@@ -39,9 +39,7 @@ defmodule Rampart.Policy do
 
 
 
-  @callback should_proceed?(current_user, resource) :: boolean
-
-
+  @callback should_proceed?(current_user, resource, atom()) :: boolean
 
   defmacro __using__(_opts) do
     quote do
@@ -49,7 +47,8 @@ defmodule Rampart.Policy do
       
       @behaviour Rampart.Policy
 
-      def should_proceed?(current_user, resource), do: true
+      def should_proceed?(_current_user, _resource, _action), do: true
+      defoverridable [should_proceed?: 3]
 
     end
   end
