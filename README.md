@@ -1,9 +1,3 @@
-## CURRENTLY BROKEN
-
-Rampart is not yet finished, and as such is broken.
-Most things work, apart from the `authorize!` function
-in controllers.
-
 [![Build Status](https://travis-ci.org/pareeohnos/rampart.svg?branch=master)](https://travis-ci.org/pareeohnos/rampart)
 
 Full documentation available [here](https://hexdocs.pm/rampart/1.0.0/Rampart.html)
