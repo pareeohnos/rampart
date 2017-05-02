@@ -17,7 +17,7 @@ To install rampart, simply add it as a dependency to your application.
 
 ```elixir
 defp deps do
-  [{ :rampart, "~> 1.0.0 }]
+  [{ :rampart, "~> 1.0.1 }]
 end
 ```
 
