@@ -14,11 +14,13 @@ defmodule Rampart.Controller do
   """
   @type resource :: any
 
+
+  alias Rampart.Authorize, as: AuthPlug
   
   
   @doc false
   defmacro __using__(_opts) do
-    quote do
+    quote location: :keep do
       import Rampart.Controller
     end
   end
@@ -29,15 +31,15 @@ defmodule Rampart.Controller do
   determine which policy to use, and what action was invoked.
 
   If you want to specify a different policy action, see
-  `authorize!/2`
+  `authorize!/3`
   """
-  @spec authorize!(resource) :: none()
-  defmacro authorize!(resource) do
-    do_authorize(resource, policy_action(__CALLER__))
+  @spec authorize!(Plug.Conn.t, resource) :: none()
+  defmacro authorize!(conn, resource) do
+    do_authorize(conn, resource, policy_action(__CALLER__))
   end
 
   @doc """
-  Authorizes the supplied resource. Unlike `authorize/1`,
+  Authorizes the supplied resource. Unlike `authorize/2`,
   this function allows you to specify which policy action
   should be used, rather than having it determined by
   Rampart. This is useful if you have a number of 
@@ -53,16 +55,21 @@ defmodule Rampart.Controller do
   And your policy would not need a `resize/2` function
   defined.
   """
-  @spec authorize!(resource, atom()) :: none()
-  defmacro authorize!(resource, action) do
-    do_authorize(resource, action)
+  @spec authorize!(Plug.Conn.t, resource, atom()) :: none()
+  defmacro authorize!(conn, resource, action) do
+    do_authorize(conn, resource, action)
   end
 
   # Hands off the authorisation login to the
   # main authorization plug.
-  defp do_authorize(resource, action) do
+  defp do_authorize(conn, resource, action) do
+    # plug Rampart.Authorize, resource: resource, action: action
     quote do
-      plug Rampart.Authorize, resource: unquote(resource), action: unquote(action)
+      opts =
+        [resource: unquote(resource), action: unquote(action)]
+        |> AuthPlug.init()
+      
+      AuthPlug.call(unquote(conn), opts)
     end
   end
 

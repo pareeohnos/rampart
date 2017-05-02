@@ -15,6 +15,13 @@ defmodule Rampart.Authorize do
   @behaviour Plug
   alias Plug.Conn
 
+  
+  
+  
+  @default_user_key :current_user
+
+
+  
 
   @typedoc """
   Opts for this plug is a simple keyword list
@@ -27,7 +34,7 @@ defmodule Rampart.Authorize do
   """
   @spec init(opts) :: opts
   def init(opts) do
-    user_key = Application.get_env(:rampart, :current_user, :current_user)
+    user_key = Application.get_env(:rampart, :current_user, @default_user_key)
     Keyword.merge(opts, user_key: user_key)
   end
 
@@ -35,7 +42,7 @@ defmodule Rampart.Authorize do
   """
   @spec call(Plug.Conn.t(), opts) :: Plug.Conn.t()
   def call(conn, opts) do
-    user_key = Keyword.get(opts, :user_key)
+    user_key = Keyword.get(opts, :user_key, @default_user_key)
     resource = Keyword.get(opts, :resource)
      action = Keyword.get(opts, :action)
 

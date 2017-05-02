@@ -71,19 +71,19 @@ defmodule MyApp.PostController do
   alias MyApp.Post
 
   def index(conn, _params) do
-    authorize!(Post)
+    authorize!(conn, Post)
   end
 
   def show(conn, params) do
     post = Repo.get(Post, params[:id])
-    authorize!(post)
+    authorize!(conn, post)
   end
 
 end
 ```
 
 We'll cover it later, but as you can see here, the only thing you have to
-do is call the `authorize!/1` function, and Rampart will handle the rest.
+do is call the `authorize!/2` function, and Rampart will handle the rest.
 Your `index/2` action will call the `index?/2` action in your policy, and
 the `show/2` action will call the `show?/2` action in your policy.
 
@@ -121,7 +121,7 @@ end
 ```
 
 Once this has been done, you will have access to the functions required
-to perform your authorization. `authorize!/1` that we saw above is the
+to perform your authorization. `authorize!/2` that we saw above is the
 one you will be using the most. It expects a single argument which is 
 the resource being authorized.
 
@@ -132,18 +132,18 @@ example (as above), if we have a `Post` module, authorize the index
 action, we would call
 
 ```elixir
-authorize!(Post)
+authorize!(conn, Post)
 ```
 
 For an action where there is a singular resource, such as the `show`
-action, we can instead pass the actual resource to the `authorize!/1`
+action, we can instead pass the actual resource to the `authorize!/2`
 function.
 
 
 #### Specify action
 
 In some cases, you may not want Rampart to infer the action name, 
-and instead specify your own. For this, there is the `authorize!/2`
+and instead specify your own. For this, there is the `authorize!/3`
 function, where the second argument is the policy action you wish
 to use. Using the `Post` example again, if we had an edit action,
 as well as a `close` action, they may share the same permission.
@@ -155,12 +155,12 @@ defmodule MyApp.PostController do
 
   def edit(conn, params) do
     post = Repo.get(Post, params[:id])
-    authorize!(post)
+    authorize!(conn, post)
   end
 
   def close(conn, params) do
     post = Repo.get(Post, params[:id])
-    authorize!(post, :edit?)
+    authorize!(conn, post, :edit?)
   end
 
 end
@@ -171,31 +171,6 @@ In your policy, you would not be required to implement the
 use. Of course, you could also implement the `close?/2` function
 and have it call the `edit?/2` function, but that is up to 
 you.
-
-
-#### Plug
-
-One thing to note about the authorize functions, is that they
-assume your controller contains a `plug` function. If you're
-working with Phoenix, then this is the case and there's nothing
-you need to do, but if not then you may need to adjust your 
-applications configuration to be able to use Rampart.
-
-If you would rather specify your authorization as a plug than
-use the convenience functions, then you are free to do so. You
-will have to specify the resource, but you will also have to
-specify the action:
-
-```elixir
-plug Rampart.Authorize, resource: Post, action: :index?
-
-post = Repo.get(Post, params[:id])
-plug Rampart.Authorize, resource: port, action: :index?
-```
-
-It's a little more verbose, but if you prefer to be explicit
-about every detail, this may be a preferred option. It's 
-entirely up to you however.
 
 
 ## Using in views and templates
@@ -355,6 +330,36 @@ config :rampart,
   current_user: :logged_in_user
 ```
 
+## Non-phoenix applications
+
+Rampart was designed to be very easy to use within a Phoenix application,
+however it can be used inside a standard Plug application almost as
+easily, however there is one caveat - it is unable to automatically
+determine the action that is being authorized. Below is a simple example
+showing how Rampart might be used with Plug directly.
+
+```elixir
+defmodule MyApp do
+  use Plug.Router
+
+  plug :match
+  plug :dispatch
+
+  get "/" do
+    authorize!(conn, Blog, :index?)
+  end
+
+  get "/new" do
+    authoriz!e(conn, Blog, :new?)
+  end
+
+end
+```
+
+Notice here that when we call invoke the authorize function, that we must
+use the `authorize/3` implementation. If we don't, then you will most likely
+get an error at runtime, as Rampart will attempt to invoke the `:do_match?`
+function on your policy which will most likely not have been implemented.
 
 ## Notes
 
